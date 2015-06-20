@@ -1,0 +1,32 @@
+---
+title: "Coursera Machine Learning Class Project"
+author: "Stefan Kolata"
+date: "June 19, 2015"
+output: html_document
+---
+
+I first eliminated features that are unlikely to have predicitve validity. Then I generated 10-fold cross validation
+
+```{r}
+library(ggplot2)
+library(caret)
+pml.training <- read.csv("~/Downloads/pml-training.csv", row.names=1)
+nsv <-nearZeroVar(pml.training)
+t<-pml.training[,-c(nsv)]
+training_set <-t[, ! apply( t , 2 , function(x) any(is.na(x)) ) ]
+train_control <- trainControl(method="cv", number=10)
+```
+
+Then I fitted a boosted tree model which I expected to fit the data well as this is a non-linear prediction:
+
+```{r}
+modgbm = train(classe ~., data=training_set,trControl = train_control,method="gbm", verbose = FALSE)
+```
+
+The boosted tree model I fit has a high in-sample accuracy (>95%) on this data set. 
+```{r}
+modgbm
+predictions <-predict(modgbm,newdata=training_set)
+confusionMatrix(predictions,training_set$classe)
+```
+I did not split the training set into a training/testing set as the training set was provided and I wanted to use as many examples as possible to train. Nevertheless, while the out of sample accuracy is expected to be lower than the in-sample accuracy I still expect the out of sample accuracy to be correspondingly high. 
